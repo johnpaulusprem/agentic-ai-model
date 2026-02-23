@@ -25,9 +25,13 @@ router = APIRouter(prefix="/api/transcription", tags=["transcription"])
     responses={502: {"model": ErrorResponse}},
 )
 async def start_transcription(req: StartTranscriptionRequest):
-    """Start transcription on an active call (uses beta API)."""
+    """Start transcription on an active call (uses beta API).
+
+    Requires the call to be in 'established' state.
+    Language defaults to 'en-us'.
+    """
     try:
-        await transcription_service.start_transcription(req.call_id)
+        await transcription_service.start_transcription(req.call_id, req.language)
     except Exception as exc:
         logger.exception("Failed to start transcription on call %s", req.call_id)
         raise HTTPException(status_code=502, detail=f"Graph API error: {exc}")
@@ -44,10 +48,16 @@ async def start_transcription(req: StartTranscriptionRequest):
     response_model=TranscriptListResponse,
     responses={502: {"model": ErrorResponse}},
 )
-async def list_transcripts(meeting_id: str = Query(..., description="Online meeting ID")):
-    """List available transcripts for a meeting."""
+async def list_transcripts(
+    user_id: str = Query(..., description="Meeting organizer's user ID"),
+    meeting_id: str = Query(..., description="Online meeting ID"),
+):
+    """List available transcripts for a meeting.
+
+    Requires the organizer's user ID (app-only access uses /users/{userId}/onlineMeetings/...).
+    """
     try:
-        transcripts = await transcription_service.list_transcripts(meeting_id)
+        transcripts = await transcription_service.list_transcripts(user_id, meeting_id)
     except Exception as exc:
         logger.exception("Failed to list transcripts for meeting %s", meeting_id)
         raise HTTPException(status_code=502, detail=f"Graph API error: {exc}")
@@ -64,12 +74,15 @@ async def list_transcripts(meeting_id: str = Query(..., description="Online meet
     responses={502: {"model": ErrorResponse}},
 )
 async def get_transcript_content(
+    user_id: str = Query(..., description="Meeting organizer's user ID"),
     meeting_id: str = Query(..., description="Online meeting ID"),
     transcript_id: str = Query(..., description="Transcript ID"),
 ):
     """Get transcript content as VTT text."""
     try:
-        content = await transcription_service.get_transcript_content(meeting_id, transcript_id)
+        content = await transcription_service.get_transcript_content(
+            user_id, meeting_id, transcript_id
+        )
     except Exception as exc:
         logger.exception(
             "Failed to get transcript content meeting=%s transcript=%s",

@@ -14,13 +14,7 @@ class StartTranscriptionRequest(BaseModel):
     """Request body for POST /api/transcription/start."""
 
     call_id: str
-
-
-class TranscriptContentRequest(BaseModel):
-    """Query parameters for GET /api/transcription/content."""
-
-    meeting_id: str
-    transcript_id: str
+    language: str = "en-us"
 
 
 class SubscribeRequest(BaseModel):

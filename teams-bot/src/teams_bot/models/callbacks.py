@@ -28,9 +28,3 @@ class ChangeNotificationCollection(BaseModel):
     """Top-level payload sent by Graph to our webhook endpoint."""
 
     value: list[ChangeNotification] = []
-
-
-class ValidationToken(BaseModel):
-    """Query parameter for Graph webhook validation handshake."""
-
-    validation_token: str
